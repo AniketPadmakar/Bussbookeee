@@ -1,5 +1,5 @@
 const hostURL={
-    link:"http://localhost:4000",
+    link:"https://bussbookeee.onrender.com",
 }
 
 export default hostURL;
