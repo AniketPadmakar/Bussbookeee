@@ -233,6 +233,7 @@ const ViewBuses = () => {
               <BusDetails>Timing: {bus.timing}</BusDetails>
               <BusDetails>From: {bus.arrivalFrom}</BusDetails>
               <BusDetails>Destination: {bus.destination}</BusDetails>
+              <BusDetails>Date: {bus.date}</BusDetails>
             </BusInfo>
             <BookButton onClick={() => handleBookTicket(bus._id, bus.busName, bus.timing, bus.arrivalFrom, bus.destination)}>
               Book Ticket
