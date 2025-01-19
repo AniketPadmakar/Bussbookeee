@@ -194,6 +194,9 @@ const UpdateBus = () => {
       ...bus,
       timing: formatTo12Hour(bus.timing), // Convert back to 12-hour format if needed
       date: new Date(bus.date).toISOString(), // Convert date to ISO format
+      arrivalFrom: formData.arrivalFrom.toLowerCase(), // Convert to lowercase
+      destination: formData.destination.toLowerCase(), // Convert to lowercase
+    };
     };
 
     try {
