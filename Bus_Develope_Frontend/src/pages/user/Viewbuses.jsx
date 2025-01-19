@@ -128,31 +128,61 @@ const ViewBuses = () => {
     fetchBuses();
   }, []);
 
-  // Search buses based on `arrivalFrom` and `destination`
+
   const handleSearch = async () => {
-    if (!arrivalFrom || !destination) {
-      alert('Both fields are mandatory to search for buses.');
-      return;
-    }
+  if (!arrivalFrom.trim() || !destination.trim()) {
+    alert('Both fields are mandatory to search for buses.');
+    return;
+  }
 
-    try {
-      const response = await axios.get(
-        `${hostURL.link}/api/user/search-buses`,
-        {
-          params: { arrivalFrom, destination },
-        }
-      );
+  // Normalize inputs: Trim spaces and convert to lowercase
+  const normalizedArrivalFrom = arrivalFrom.trim().toLowerCase();
+  const normalizedDestination = destination.trim().toLowerCase();
 
-      if (response.status === 200) {
-        setBuses(response.data.buses);
-      } else {
-        alert('No buses found for the given criteria.');
-      }
-    } catch (error) {
-      console.error('Error searching for buses:', error);
-      alert('An error occurred while searching for buses.');
+  try {
+    const response = await axios.get(`${hostURL.link}/api/user/search-buses`, {
+      params: {
+        arrivalFrom: normalizedArrivalFrom,
+        destination: normalizedDestination,
+      },
+    });
+
+    if (response.status === 200) {
+      setBuses(response.data.buses);
+    } else {
+      alert('No buses found for the given criteria.');
     }
-  };
+  } catch (error) {
+    console.error('Error searching for buses:', error);
+    alert('An error occurred while searching for buses.');
+  }
+};
+
+  // Search buses based on `arrivalFrom` and `destination`
+  // const handleSearch = async () => {
+  //   if (!arrivalFrom || !destination) {
+  //     alert('Both fields are mandatory to search for buses.');
+  //     return;
+  //   }
+
+  //   try {
+  //     const response = await axios.get(
+  //       `${hostURL.link}/api/user/search-buses`,
+  //       {
+  //         params: { arrivalFrom, destination },
+  //       }
+  //     );
+
+  //     if (response.status === 200) {
+  //       setBuses(response.data.buses);
+  //     } else {
+  //       alert('No buses found for the given criteria.');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error searching for buses:', error);
+  //     alert('An error occurred while searching for buses.');
+  //   }
+  // };
 
   // Redirect to the booking page with the selected bus ID
   const handleBookTicket = async (busId, busName, timing, from, to) => {
