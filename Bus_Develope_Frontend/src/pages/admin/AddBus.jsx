@@ -171,6 +171,8 @@ const AddBus = () => {
       ...formData,
       timing: formatTime(formData.timing),
       date: new Date(formData.date).toISOString(),
+      arrivalFrom: formData.arrivalFrom.toLowerCase(), // Convert to lowercase
+      destination: formData.destination.toLowerCase(), // Convert to lowercase
     };
 
     try {
