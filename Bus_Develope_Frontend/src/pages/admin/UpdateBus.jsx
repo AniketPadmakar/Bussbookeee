@@ -197,7 +197,6 @@ const UpdateBus = () => {
       arrivalFrom: formData.arrivalFrom.toLowerCase(), // Convert to lowercase
       destination: formData.destination.toLowerCase(), // Convert to lowercase
     };
-    };
 
     try {
       const response = await axios.put(
