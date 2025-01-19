@@ -184,6 +184,15 @@ const ViewBuses = () => {
   //   }
   // };
 
+  const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(date);
+  };
+
   // Redirect to the booking page with the selected bus ID
   const handleBookTicket = async (busId, busName, timing, from, to) => {
     try {
@@ -233,7 +242,7 @@ const ViewBuses = () => {
               <BusDetails>Timing: {bus.timing}</BusDetails>
               <BusDetails>From: {bus.arrivalFrom}</BusDetails>
               <BusDetails>Destination: {bus.destination}</BusDetails>
-              <BusDetails>Date: {bus.date}</BusDetails>
+              <BusDetails>Date: {formatDate(bus.date)}</BusDetails>
             </BusInfo>
             <BookButton onClick={() => handleBookTicket(bus._id, bus.busName, bus.timing, bus.arrivalFrom, bus.destination)}>
               Book Ticket
