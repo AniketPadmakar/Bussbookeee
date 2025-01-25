@@ -1,4 +1,8 @@
 const express = require("express");
+const app = express();
+app.use(express.json());
+const axios = require("axios");
+const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const fetchadmin = require("../../middleware/fetchadmin");
@@ -6,6 +10,10 @@ const router = express.Router();
 const Admin = mongoose.model("Admin");
 const Bus = mongoose.model("Bus");
 const Ticket = mongoose.model("Ticket");
+const Driver = mongoose.model("Driver");
+dotenv.config(); // Load environment variables from .env file
+
+const { APP_ID, APP_KEY } = process.env;
 
 // Add a new bus
 router.post("/add-bus", fetchadmin, async (req, res) => {
@@ -310,70 +318,119 @@ router.post('/view-tickets', async (req, res) => {
   }
 });
 
-// router.get("/view-total-sales", fetchadmin, async (req, res) => {
-//   const adminId = req.user.id; // Admin ID from middleware
+// Route to generate an access token
+router.post("/generate-access-token", async (req, res) => {
+  try {
+    const { expiry = 300 } = req.body; // Expiry in seconds, default to 5 minutes if not provided
 
-//   try {
-//     // Validate admin existence
-//     const admin = await Admin.findById(adminId).populate("buses"); // Populates buses data
-//     // if (!admin) {
-//     //   return res.status(401).json({ error: "Admin not found" });
-//     // }
+    // Validate expiry value
+    if (expiry < 1 || expiry > 86400) {
+      return res
+        .status(400)
+        .json({ error: "Invalid expiry value. It must be between 1 and 86400 seconds." });
+    }
 
-//     // Calculate total sales
-//     let totalSales = 0;
-//     for (const busId of admin.buses) {
-//       const bus = await Bus.findById(busId);
-//       if (bus) {
-//         totalSales += bus.rate * (bus.totalSeats - bus.availableSeats);
-//       }
-//     }
+    // Make the API call to generate the access token
+    const response = await axios.post(
+      "https://auth.hyperverge.co/login",
+      {
+        appId: APP_ID,
+        appKey: APP_KEY,
+        expiry,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-//     res
-//       .status(200)
-//       .json({ totalSales, message: "Total sales calculated successfully" });
-//   } catch (error) {
-//     console.error(error);
-//     res
-//       .status(500)
-//       .json({ error: "An error occurred while calculating total sales" });
-//   }
-// });
+    // Return the generated token in the response
+    res.status(200).json({
+      message: "Access token generated successfully",
+      token: response.data.result.token,
+    });
+  } catch (error) {
+    console.error("Error generating access token:", error.message);
 
-// // Reset all bookings for a specific bus
-// router.put("/reset-booking", fetchadmin, async (req, res) => {
-//   const adminId = req.user.id; // Admin ID from token
-//   const { busId } = req.body; // Bus ID from frontend
+    // Handle errors
+    if (error.response && error.response.data) {
+      return res.status(error.response.status).json({
+        error: error.response.data.error || "Error generating access token",
+      });
+    }
 
-//   try {
-//     if (!busId) {
-//       return res.status(400).json({ error: "Bus ID is required" });
-//     }
+    res.status(500).json({
+      error: "Internal server error while generating access token",
+    });
+  }
+});
 
-//     const admin = await Admin.findById(adminId);
-//     // if (!admin) {
-//     //   return res
-//     //     .status(401)
-//     //     .json({ error: "Unauthorized access. Admin not found" });
-//     // }
-//     const bus = await Bus.findById(busId);
-//     if (!bus) {
-//       return res.status(404).json({ error: "Bus not found" });
-//     }
 
-//     // Reset the availableSeats to totalSeats
-//     bus.availableSeats = bus.totalSeats;
-//     await bus.save();
+router.post("/submit-kyc", async (req, res) => {
+  try {
+    //console.log("Incoming request body:", req.body);
 
-//     res.status(200).json({
-//       message: "All bookings reset successfully. All seats are now available.",
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res
-//       .status(500)
-//       .json({ error: "An error occurred while resetting bookings" });
-//   }
-// });
+    const { transactionId, status, details } = req.body;
+
+    // Validate required fields
+    if (!transactionId || !status) {
+      return res.status(400).json({ message: "Invalid data received: Missing required fields (transactionId, status)" });
+    }
+
+    const requestBody = { transactionId };
+
+    // Call HyperVerge Logs API
+    const response = await axios.post(
+      "https://ind.idv.hyperverge.co/v1/link-kyc/results",
+      requestBody,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          appId: process.env.APP_ID,
+          appKey: process.env.APP_KEY,
+        },
+      }
+    );
+
+    //console.log("Response from HyperVerge API:", response.data);
+
+    // Validate the response structure
+    if (!response.data || !response.data.result) {
+      return res.status(500).json({
+        message: "Invalid response structure from HyperVerge API",
+        details: response.data || "No response data",
+      });
+    }
+
+    const logData = response.data.result;
+
+    // Safely access metadata and transactionId
+    const metadata = logData.metadata || {};
+    const transactionIdFromResponse = metadata.transactionId || "N/A";
+
+    const newDriver = new Driver({
+      transactionId: transactionIdFromResponse,
+      workflowId: logData.workflowDetails?.workflowId || "N/A",
+      status: logData.applicationStatus || "Unknown",
+      userDetails: logData.userDetails || {},
+      results: logData.results || [],
+      processedAt: logData.processedAt || new Date(),
+      attempts: logData.results?.length || 0,
+    });
+
+    //console.log("New Driver object to be saved:", newDriver);
+
+    await newDriver.save().catch((error) => {
+      console.error("Error saving to the database:", error.message);
+      throw error; // Re-throw the error for consistent error handling
+    });
+
+    res.status(200).json({ message: "Logs fetched and saved successfully", newDriver });
+  } catch (error) {
+    console.error("Error fetching logs:", error.message, error.response?.data || {});
+    res.status(500).json({ message: "Server error. Please try again later.", error: error.message });
+  }
+});
 
 module.exports = router;

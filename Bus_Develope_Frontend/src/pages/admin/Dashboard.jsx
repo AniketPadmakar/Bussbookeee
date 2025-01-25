@@ -80,6 +80,7 @@ const Menu = () => {
         <Title>Menu</Title>
         <OptionButton onClick={() => navigate('/add-bus')}>Add Bus</OptionButton>
         <OptionButton onClick={() => navigate('/admin-view-buses')}>View Buses</OptionButton>
+        <OptionButton onClick={() => navigate('/admin-add-driver')}>Add Driver</OptionButton>
         <OptionButton onClick={handleLogout}>Logout</OptionButton>
       </OptionsWrapper>
     </Container>
