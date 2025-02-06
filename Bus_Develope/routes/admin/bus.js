@@ -12,6 +12,8 @@ const Bus = mongoose.model("Bus");
 const Ticket = mongoose.model("Ticket");
 const Driver = mongoose.model("Driver");
 dotenv.config(); // Load environment variables from .env file
+const cors = require("cors");
+app.use(cors({ origin: "*" })); // Allows requests from any origin
 
 const { APP_ID, APP_KEY } = process.env;
 

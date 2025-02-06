@@ -8,6 +8,9 @@ import AdminViewBuses from './pages/admin/ViewBuses';
 import AdminViewTickets from './pages/admin/ViewTickets';
 import AdminUpdateBus from './pages/admin/UpdateBus';
 import AdminAdddriver from './pages/admin/Adddriver.jsx';
+import AdminAdddrivergkyc from './pages/admin/Adddrivergkyc.jsx';
+import AdminAdddrivergkycreadid from './pages/admin/Adddrivergkyc-readid.jsx';
+import DriverLiveliness from './pages/admin/Driverliveliness.jsx';
 import UserSignin from './pages/user/SigninSignup/Signin';
 import UserSignup from './pages/user/SigninSignup/Signup';
 import UserDashboard from './pages/user/Dashboard';
@@ -31,6 +34,9 @@ function App() {
         <Route path="/admin-view-tickets/:busId" element={<AdminViewTickets />} />
         <Route path="/admin-update-bus/:busId" element={<AdminUpdateBus />} />
         <Route path="/admin-add-driver" element={<AdminAdddriver />} />
+        <Route path="/admin-add-driver-gkyc" element={<AdminAdddrivergkyc />} />
+        <Route path="/admin-add-driver-gkyc-readid" element={<AdminAdddrivergkycreadid />} />
+        <Route path="/admin-driver-liveiness" element={<DriverLiveliness />} />
         <Route path="/user-signin" element={<UserSignin />} />
         <Route path="/user-signup" element={<UserSignup />} />
         <Route path="/user-dash" element={<UserDashboard />} />

@@ -66,7 +66,6 @@ const AddDriver = () => {
     setLoading(true);
 
     try {
-      // Step 1: Fetch the access token from the backend
       const response = await axios.post(hostURL.link + "/api/admin/generate-access-token", {
         expiry: 300, // 5 minutes
       });
@@ -79,15 +78,12 @@ const AddDriver = () => {
       const workflowId = "Digilocker_Workflow_Ani"; // Replace with your workflow ID
       const transactionId = uuidv4(); // Generate a unique transaction ID
 
-      // Step 2: Ensure HyperVerge SDK is loaded
       if (!window.HyperKycConfig || !window.HyperKYCModule) {
         throw new Error("HyperVerge SDK not properly loaded. Please check the SDK integration.");
       }
 
-      // Step 3: Initialize HyperVerge SDK configuration
       const hyperKycConfig = new window.HyperKycConfig(accessToken, workflowId, transactionId);
 
-      // Step 4: Define the result handler
       const handler = async (HyperKycResult) => {
         console.log("HyperKycResult received:", HyperKycResult);
 
@@ -100,7 +96,6 @@ const AddDriver = () => {
 
         const { status, details, latestModule, errorCode, errorMessage } = HyperKycResult;
 
-        // Handle failed or incomplete KYC
         if (status !== "auto_approved") {
           console.error("KYC not auto approved. Status:", status);
           alert("Failed to add driver. Please try again.");
@@ -119,11 +114,12 @@ const AddDriver = () => {
             errorMessage,   // Only included for 'error' scenario
           };
 
-          // Send the result data to the backend only if the KYC status is auto_approved
           const backendResponse = await axios.post(hostURL.link + "/api/admin/submit-kyc", resultData);
 
           if (backendResponse.status === 200) {
             alert("Driver added successfully!");
+            
+            //await handleOutputsAPI(transactionId);
           } else {
             alert("Failed to save driver data. Please try again.");
           }
@@ -135,7 +131,6 @@ const AddDriver = () => {
         setKycStarted(false);
       };
 
-      // Step 6: Launch the SDK
       window.HyperKYCModule.launch(hyperKycConfig, handler);
       setKycStarted(true);
     } catch (error) {
@@ -143,6 +138,47 @@ const AddDriver = () => {
       alert(`Failed to start the KYC process. Please try again. Error: ${error.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOutputsAPI = async (transactionId) => {
+    try {
+      console.log("Calling APIs with Transaction ID:", transactionId);
+
+      console.log("Trial 1: Calling Results API first");
+      try {
+        const resultsResponse = await axios.post("https://62a8-115-111-75-30.ngrok-free.app/results", { transactionId });
+        console.log("Results API Response:", resultsResponse.data);
+      } catch (error) {
+        console.error("Error calling Results API:", error.message);
+      }
+
+      try {
+        const outputsResponse = await axios.post("https://62a8-115-111-75-30.ngrok-free.app/outputs", { transactionId });
+        console.log("Outputs API Response:", outputsResponse.data);
+      } catch (error) {
+        console.error("Error calling Outputs API:", error.message);
+      }
+
+      console.log("Trial 2: Calling Outputs API first");
+      try {
+        const outputsResponse = await axios.post("https://62a8-115-111-75-30.ngrok-free.app/outputs", { transactionId });
+        console.log("Outputs API Response:", outputsResponse.data);
+      } catch (error) {
+        console.error("Error calling Outputs API:", error.message);
+      }
+
+      try {
+        const resultsResponse = await axios.post("https://62a8-115-111-75-30.ngrok-free.app/results", { transactionId });
+        console.log("Results API Response:", resultsResponse.data);
+      } catch (error) {
+        console.error("Error calling Results API:", error.message);
+      }
+
+      alert("Outputs and Results API calls completed!");
+    } catch (error) {
+      console.error("Error in handleOutputsAPI:", error.message);
+      alert("Error while calling Outputs API.");
     }
   };
 
